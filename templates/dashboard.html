@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visitor Intent Modeling · Analytics Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ─── DESIGN TOKENS ─────────────────────────────────────── */
+:root {
+  --ink:    #080d16;
+  --ink2:   #0e1624;
+  --ink3:   #141f30;
+  --rim:    #1c2d44;
+  --rim2:   #253c58;
+  --fog:    #4a6280;
+  --mist:   #7b96b2;
+  --sky:    #ddeaf8;
+  --white:  #eef5ff;
+  --cyan:   #00d4ff;
+  --teal:   #00b8a3;
+  --green:  #17e8a8;
+  --lime:   #a3f542;
+  --amber:  #ffb020;
+  --orange: #ff6b2b;
+  --rose:   #ff3366;
+  --violet: #c26dff;
+  --blue:   #3b82f6;
+  --glow:   rgba(0,212,255,.12);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+
+body {
+  background: var(--ink);
+  color: var(--sky);
+  font-family: 'Bricolage Grotesque', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Ambient glows */
+body::before {
+  content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background:
+    radial-gradient(ellipse 900px 700px at 5% 0%,   rgba(0,212,255,.055) 0%, transparent 65%),
+    radial-gradient(ellipse 700px 500px at 95% 90%,  rgba(23,232,168,.045) 0%, transparent 65%),
+    radial-gradient(ellipse 500px 400px at 50% 45%,  rgba(59,130,246,.03) 0%, transparent 70%);
+}
+
+/* Grid lines */
+body::after {
+  content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:
+    linear-gradient(rgba(0,212,255,.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,.022) 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+
+.wrap { max-width:1460px; margin:0 auto; padding:0 28px; position:relative; z-index:1; }
+
+/* ─── LOADING SCREEN ────────────────────────────────────── */
+#loading {
+  position:fixed; inset:0; z-index:9999;
+  background: var(--ink);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
+  transition: opacity .5s ease;
+}
+#loading.hidden { opacity:0; pointer-events:none; }
+
+.spinner {
+  width:48px; height:48px; border-radius:50%;
+  border:3px solid var(--rim);
+  border-top-color:var(--cyan);
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.loading-text {
+  font-family:'JetBrains Mono', monospace;
+  font-size:12px; color:var(--fog); letter-spacing:2px;
+  text-transform:uppercase;
+}
+.loading-dots::after {
+  content:'';
+  animation: dots 1.4s steps(4,end) infinite;
+}
+@keyframes dots {
+  0%   { content:''; }
+  25%  { content:'.'; }
+  50%  { content:'..'; }
+  75%  { content:'...'; }
+  100% { content:''; }
+}
+
+/* ─── HEADER ─────────────────────────────────────────────── */
+.header {
+  position:sticky; top:0; z-index:100;
+  background:rgba(8,13,22,.9);
+  backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--rim);
+  padding:22px 0;
+  margin-bottom:30px;
+}
+.header-inner {
+  display:flex; justify-content:space-between;
+  align-items:center; flex-wrap:wrap; gap:14px;
+}
+.brand { display:flex; align-items:center; gap:14px; }
+
+.brand-orb {
+  position:relative; width:46px; height:46px;
+}
+.brand-orb .pulse-ring {
+  position:absolute; inset:-7px; border-radius:50%;
+  border:1.5px solid rgba(0,212,255,.2);
+  animation:pulse 2.8s ease-in-out infinite;
+}
+.brand-orb .pulse-ring:nth-child(2) { inset:-13px; animation-delay:.9s; opacity:.4; }
+.brand-orb .core {
+  width:46px; height:46px; border-radius:12px;
+  background:linear-gradient(135deg, rgba(0,212,255,.18), rgba(23,232,168,.18));
+  border:1px solid rgba(0,212,255,.3);
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px;
+  box-shadow:0 0 30px rgba(0,212,255,.18);
+}
+@keyframes pulse {
+  0%,100% { transform:scale(1); opacity:.3; }
+  50%      { transform:scale(1.2); opacity:0; }
+}
+
+.brand-text h1 {
+  font-size:19px; font-weight:800; letter-spacing:-.5px;
+  background:linear-gradient(110deg, var(--white) 45%, var(--cyan));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.brand-text .tagline {
+  font-family:'JetBrains Mono',monospace;
+  font-size:9px; color:var(--fog); letter-spacing:1.8px;
+  text-transform:uppercase; margin-top:1px;
+}
+
+.header-right { display:flex; align-items:center; gap:10px; }
+.pill {
+  display:flex; align-items:center; gap:6px;
+  padding:5px 12px; border-radius:20px;
+  font-family:'JetBrains Mono',monospace; font-size:10px; font-weight:500;
+  border:1px solid; letter-spacing:.5px;
+}
+.pill-green { border-color:var(--green); color:var(--green); background:rgba(23,232,168,.07); }
+.pill-cyan  { border-color:var(--cyan);  color:var(--cyan);  background:rgba(0,212,255,.07); }
+.pill-violet{ border-color:var(--violet);color:var(--violet);background:rgba(194,109,255,.07); }
+.dot-blink  { width:6px; height:6px; border-radius:50%; background:currentColor; animation:blink 1.5s ease infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.15} }
+
+/* API status badge */
+#api-status {
+  padding:4px 10px; border-radius:6px;
+  font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1px;
+  border:1px solid var(--rim);  color:var(--fog);
+  transition:all .3s;
+}
+#api-status.ok     { border-color:var(--green); color:var(--green); background:rgba(23,232,168,.07); }
+#api-status.error  { border-color:var(--rose);  color:var(--rose);  background:rgba(255,51,102,.07); }
+
+/* ─── SECTION LABEL ─────────────────────────────────────── */
+.sec {
+  font-family:'JetBrains Mono',monospace; font-size:9px;
+  letter-spacing:2.5px; color:var(--cyan); text-transform:uppercase;
+  margin-bottom:14px; display:flex; align-items:center; gap:10px; font-weight:500;
+}
+.sec::after { content:''; flex:1; height:1px; background:linear-gradient(90deg,var(--rim),transparent); }
+
+/* ─── KPI GRID ───────────────────────────────────────────── */
+.kpi-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:13px; margin-bottom:26px; }
+
+.kpi {
+  background:var(--ink2); border:1px solid var(--rim); border-radius:16px;
+  padding:20px 18px; position:relative; overflow:hidden;
+  transition:border-color .25s, transform .2s, box-shadow .25s;
+}
+.kpi:hover { border-color:var(--kc,var(--cyan)); transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,0,0,.3); }
+.kpi::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--kc,var(--cyan)); opacity:.85; }
+.kpi::after  {
+  content:''; position:absolute; bottom:-24px; right:-16px;
+  width:72px; height:72px; border-radius:50%;
+  background:radial-gradient(circle, var(--kc,var(--cyan)) 0%, transparent 70%); opacity:.06;
+}
+
+.kpi-icon  { font-size:16px; margin-bottom:10px; }
+.kpi-lbl   { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--fog); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; }
+.kpi-val   { font-size:26px; font-weight:800; letter-spacing:-1px; color:var(--kc,var(--cyan)); line-height:1; }
+.kpi-sub   { font-size:10px; color:var(--mist); margin-top:5px; }
+
+/* ─── CARDS ──────────────────────────────────────────────── */
+.card {
+  background:var(--ink2); border:1px solid var(--rim); border-radius:18px;
+  padding:24px; transition:border-color .25s;
+}
+.card:hover { border-color:var(--rim2); }
+.card-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; }
+.card-title { font-size:14px; font-weight:700; letter-spacing:-.3px; display:flex; align-items:center; gap:8px; }
+.card-title .ico { font-size:15px; }
+.tag {
+  font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.5px;
+  padding:3px 9px; border-radius:6px;
+  background:rgba(0,212,255,.08); border:1px solid rgba(0,212,255,.2); color:var(--cyan);
+}
+
+/* ─── GRID LAYOUTS ───────────────────────────────────────── */
+.row { display:grid; gap:16px; margin-bottom:16px; }
+.col-7-5  { grid-template-columns:7fr 5fr; }
+.col-4-4-4{ grid-template-columns:1fr 1fr 1fr; }
+.col-5-7  { grid-template-columns:5fr 7fr; }
+
+/* ─── TABLE ──────────────────────────────────────────────── */
+.tbl-scroll { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+thead th {
+  text-align:left; padding:8px 10px;
+  font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:1.5px;
+  text-transform:uppercase; color:var(--fog);
+  border-bottom:1px solid var(--rim);
+}
+tbody tr { border-bottom:1px solid rgba(28,45,68,.55); transition:background .12s; }
+tbody tr:hover { background:rgba(0,212,255,.025); }
+tbody td { padding:9px 10px; vertical-align:middle; }
+
+.sid { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--fog); }
+.src-chip {
+  font-size:11px; padding:2px 7px; border-radius:5px;
+  background:var(--ink3); border:1px solid var(--rim); white-space:nowrap;
+}
+
+.bar-row   { display:flex; align-items:center; gap:8px; }
+.bar-outer { flex:1; height:6px; background:var(--rim); border-radius:3px; overflow:hidden; min-width:56px; }
+.bar-inner { height:100%; border-radius:3px; transition:width 1.3s cubic-bezier(.16,1,.3,1); }
+.bar-num   { font-family:'JetBrains Mono',monospace; font-size:11px; min-width:36px; text-align:right; }
+
+.badge-hi {
+  padding:3px 8px; border-radius:20px; font-size:10px; font-weight:600;
+  font-family:'JetBrains Mono',monospace;
+  background:rgba(23,232,168,.12); color:var(--green); border:1px solid rgba(23,232,168,.25);
+}
+.badge-lo {
+  padding:3px 8px; border-radius:20px; font-size:10px; font-weight:600;
+  font-family:'JetBrains Mono',monospace;
+  background:rgba(255,51,102,.10); color:var(--rose); border:1px solid rgba(255,51,102,.22);
+}
+
+/* ─── SOURCE RANKING ─────────────────────────────────────── */
+.src-row {
+  display:flex; align-items:center; gap:14px;
+  padding:11px 0; border-bottom:1px solid var(--rim);
+}
+.src-row:last-child { border-bottom:none; }
+.src-num { font-family:'JetBrains Mono',monospace; font-weight:700; font-size:15px; min-width:26px; }
+.src-num.g { color:var(--amber); }
+.src-num.s { color:var(--mist); }
+.src-num.b { color:var(--orange); }
+.src-num.n { color:var(--rim2); }
+.src-body { flex:1; min-width:0; }
+.src-name { font-size:13px; font-weight:600; }
+.src-meta { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--fog); margin-top:2px; letter-spacing:.4px; }
+.src-bar  { height:3px; background:var(--rim); border-radius:2px; margin-top:5px; overflow:hidden; }
+.src-fill { height:100%; border-radius:2px; transition:width 1.5s cubic-bezier(.16,1,.3,1); }
+.src-score { font-size:18px; font-weight:800; min-width:42px; text-align:right; }
+
+/* ─── FEATURE IMPORTANCE ─────────────────────────────────── */
+.fi-row  { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.fi-name { font-size:12px; min-width:148px; }
+.fi-trk  { flex:1; height:10px; background:var(--rim); border-radius:5px; overflow:hidden; }
+.fi-fill { height:100%; border-radius:5px; transition:width 1.3s cubic-bezier(.16,1,.3,1); }
+.fi-pct  { font-family:'JetBrains Mono',monospace; font-size:11px; min-width:38px; text-align:right; }
+
+.metrics-row { display:flex; gap:9px; flex-wrap:wrap; margin-top:18px; }
+.metric-box {
+  flex:1; min-width:62px;
+  background:var(--ink3); border:1px solid var(--rim);
+  border-radius:10px; padding:11px 12px; text-align:center;
+  transition:border-color .2s, box-shadow .2s;
+}
+.metric-box:hover { border-color:var(--cyan); box-shadow:0 0 16px rgba(0,212,255,.08); }
+.metric-box .mv { font-size:17px; font-weight:800; color:var(--cyan); }
+.metric-box .ml { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--fog); margin-top:3px; letter-spacing:1px; }
+
+/* ─── CONFUSION MATRIX ───────────────────────────────────── */
+.cm-wrap { display:flex; flex-direction:column; align-items:center; margin-top:10px; }
+.cm-row  { display:flex; gap:6px; align-items:center; }
+.cm-cell {
+  width:86px; height:70px; border-radius:12px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  transition:transform .2s;
+}
+.cm-cell:hover { transform:scale(1.05); }
+.cm-v { font-size:22px; font-weight:800; }
+.cm-l { font-size:9px; font-family:'JetBrains Mono',monospace; letter-spacing:.5px; margin-top:2px; }
+.tp { background:rgba(23,232,168,.12); border:1px solid rgba(23,232,168,.28); }
+.tp .cm-v { color:var(--green); }  .tp .cm-l { color:rgba(23,232,168,.55); }
+.fp { background:rgba(255,176,32,.10); border:1px solid rgba(255,176,32,.24); }
+.fp .cm-v { color:var(--amber); }  .fp .cm-l { color:rgba(255,176,32,.55); }
+.fn { background:rgba(255,51,102,.10); border:1px solid rgba(255,51,102,.22); }
+.fn .cm-v { color:var(--rose); }   .fn .cm-l { color:rgba(255,51,102,.55); }
+.tn { background:rgba(74,98,128,.13); border:1px solid rgba(74,98,128,.32); }
+.tn .cm-v { color:var(--fog); }    .tn .cm-l { color:rgba(74,98,128,.65); }
+.cm-ax { font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--fog); letter-spacing:1.5px; text-transform:uppercase; }
+.cm-ax-h { text-align:center; width:86px; }
+.cm-ax-v { writing-mode:vertical-rl; transform:rotate(180deg); }
+
+/* ─── DEVICE BREAKDOWN ───────────────────────────────────── */
+.dev-list { display:flex; flex-direction:column; gap:11px; margin-top:10px; }
+.dev-row  { display:flex; align-items:center; gap:10px; }
+.dev-ico  { font-size:17px; min-width:26px; }
+.dev-info { flex:1; }
+.dev-name { font-size:12px; font-weight:600; margin-bottom:4px; }
+.dev-bar  { height:7px; background:var(--rim); border-radius:4px; overflow:hidden; }
+.dev-fill { height:100%; border-radius:4px; background:linear-gradient(90deg,var(--cyan),var(--teal)); transition:width 1.4s cubic-bezier(.16,1,.3,1); }
+.dev-pct  { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--cyan); min-width:34px; text-align:right; }
+
+/* ─── SCORE DISTRIBUTION ─────────────────────────────────── */
+.dist-legend { display:flex; gap:14px; font-family:'JetBrains Mono',monospace; font-size:10px; margin-bottom:8px; }
+.dist-chart  { display:flex; align-items:flex-end; gap:3px; height:96px; }
+.dist-group  { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:2px; height:100%; }
+.dist-hi { width:100%; background:linear-gradient(to top, var(--green), rgba(23,232,168,.35)); border-radius:3px 3px 0 0; min-height:0; }
+.dist-lo { width:100%; background:linear-gradient(to top, var(--rose),  rgba(255,51,102,.35)); border-radius:3px 3px 0 0; min-height:0; }
+.dist-xlbl { display:flex; gap:3px; margin-top:5px; }
+.dist-xlbl span { flex:1; font-family:'JetBrains Mono',monospace; font-size:8px; color:var(--fog); text-align:center; }
+
+/* CV bars */
+.cv-wrap { margin-top:20px; display:flex; flex-direction:column; gap:8px; }
+.cv-row  { display:flex; align-items:center; gap:8px; }
+.cv-lbl  { font-size:11px; min-width:100px; color:var(--mist); }
+.cv-trk  { flex:1; height:8px; background:var(--rim); border-radius:4px; overflow:hidden; }
+.cv-fill { height:100%; border-radius:4px; transition:width 1.5s cubic-bezier(.16,1,.3,1); }
+.cv-num  { font-family:'JetBrains Mono',monospace; font-size:10px; min-width:60px; text-align:right; }
+
+/* ─── BEHAVIORAL INDICATORS ──────────────────────────────── */
+.ind-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.ind-card {
+  background:var(--ink3); border:1px solid var(--rim); border-radius:12px; padding:14px;
+  position:relative; overflow:hidden; transition:border-color .2s, box-shadow .2s;
+}
+.ind-card::before { content:''; position:absolute; top:0; left:0; bottom:0; width:3px; background:var(--ic,var(--cyan)); border-radius:3px 0 0 3px; }
+.ind-card:hover { border-color:var(--ic,var(--cyan)); box-shadow:0 0 18px rgba(0,212,255,.06); }
+.ind-title { font-size:12px; font-weight:700; margin-bottom:5px; }
+.ind-desc  { font-size:10px; color:var(--mist); line-height:1.55; }
+.ind-sig   { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:600; margin-top:8px; padding:2px 7px; border-radius:4px; display:inline-block; letter-spacing:.5px; }
+.sig-hi { background:rgba(23,232,168,.10);  color:var(--green); }
+.sig-md { background:rgba(255,176,32,.10);  color:var(--amber); }
+.sig-lo { background:rgba(255,51,102,.10);  color:var(--rose);  }
+
+/* ─── SOURCE SUMMARY ─────────────────────────────────────── */
+.summ-row { display:flex; align-items:flex-start; gap:14px; padding:11px 0; border-bottom:1px solid var(--rim); }
+.summ-row:last-child { border-bottom:none; }
+.summ-num { font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:700; min-width:30px; }
+.summ-body { flex:1; }
+.summ-title  { font-size:13px; font-weight:700; margin-bottom:3px; }
+.summ-detail { font-size:10px; color:var(--mist); line-height:1.6; }
+.summ-score  { font-family:'JetBrains Mono',monospace; font-size:13px; font-weight:600; padding:3px 10px; border-radius:6px; border:1px solid; white-space:nowrap; align-self:flex-start; }
+
+/* ─── API ENDPOINT REFERENCE ─────────────────────────────── */
+.api-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.api-card {
+  background:var(--ink3); border:1px solid var(--rim); border-radius:10px; padding:14px;
+  transition:border-color .2s;
+}
+.api-card:hover { border-color:var(--cyan); }
+.api-method { font-family:'JetBrains Mono',monospace; font-size:9px; font-weight:600; color:var(--green); letter-spacing:1px; }
+.api-path   { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--cyan); margin:4px 0; font-weight:500; }
+.api-desc   { font-size:10px; color:var(--mist); }
+
+/* ─── FOOTER ─────────────────────────────────────────────── */
+footer {
+  border-top:1px solid var(--rim); padding:20px 0 28px; margin-top:28px;
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+}
+footer span { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--fog); }
+footer a    { color:var(--cyan); text-decoration:none; }
+
+/* ─── ANIMATIONS ─────────────────────────────────────────── */
+@keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+.fu  { animation:fadeUp .55s ease both; }
+.d1  { animation-delay:.04s } .d2 { animation-delay:.08s } .d3 { animation-delay:.12s }
+.d4  { animation-delay:.16s } .d5 { animation-delay:.20s } .d6 { animation-delay:.24s }
+.d7  { animation-delay:.28s } .d8 { animation-delay:.32s } .d9 { animation-delay:.38s }
+
+/* ─── RESPONSIVE ─────────────────────────────────────────── */
+@media(max-width:1100px){
+  .kpi-grid    { grid-template-columns:repeat(3,1fr); }
+  .col-7-5, .col-5-7 { grid-template-columns:1fr; }
+  .col-4-4-4  { grid-template-columns:1fr 1fr; }
+  .api-grid   { grid-template-columns:1fr 1fr; }
+}
+@media(max-width:680px){
+  .kpi-grid   { grid-template-columns:repeat(2,1fr); }
+  .col-4-4-4  { grid-template-columns:1fr; }
+  .ind-grid   { grid-template-columns:1fr; }
+  .api-grid   { grid-template-columns:1fr; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ── LOADING SCREEN ─────────────────────────────────────── -->
+<div id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Fetching model data<span class="loading-dots"></span></div>
+</div>
+
+<div class="wrap">
+
+  <!-- ── HEADER ──────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-orb">
+          <div class="pulse-ring"></div>
+          <div class="pulse-ring"></div>
+          <div class="core">🎯</div>
+        </div>
+        <div class="brand-text">
+          <h1>Visitor Intent Modeling</h1>
+          <div class="tagline">Gradient Boosting Classifier · Behavioral Analytics Platform</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <span id="api-status">API LOADING...</span>
+        <div class="pill pill-green"><span class="dot-blink"></span>Model Active</div>
+        <div class="pill pill-cyan">5 000 Sessions</div>
+        <div class="pill pill-violet">Flask 3.x</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── KPIs ──────────────────────────────────────────────── -->
+  <div class="sec">Model Overview</div>
+  <div class="kpi-grid">
+    <div class="kpi fu d1" style="--kc:var(--cyan)">
+      <div class="kpi-icon">📊</div>
+      <div class="kpi-lbl">Total Sessions</div>
+      <div class="kpi-val" id="k-total">—</div>
+      <div class="kpi-sub">Synthetic dummy data</div>
+    </div>
+    <div class="kpi fu d2" style="--kc:var(--green)">
+      <div class="kpi-icon">🟢</div>
+      <div class="kpi-lbl">High-Intent</div>
+      <div class="kpi-val" id="k-hi">—</div>
+      <div class="kpi-sub"><span style="color:var(--green)" id="k-hi-pct">—</span> of sessions</div>
+    </div>
+    <div class="kpi fu d3" style="--kc:var(--rose)">
+      <div class="kpi-icon">🔴</div>
+      <div class="kpi-lbl">Low-Intent</div>
+      <div class="kpi-val" id="k-lo">—</div>
+      <div class="kpi-sub" id="k-lo-pct">— of sessions</div>
+    </div>
+    <div class="kpi fu d4" style="--kc:var(--violet)">
+      <div class="kpi-icon">🧮</div>
+      <div class="kpi-lbl">Avg Intent Score</div>
+      <div class="kpi-val" id="k-avg">—</div>
+      <div class="kpi-sub">Per-session probability</div>
+    </div>
+    <div class="kpi fu d5" style="--kc:var(--amber)">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-lbl">Conv. Lift</div>
+      <div class="kpi-val" id="k-lift">—</div>
+      <div class="kpi-sub">High vs low intent</div>
+    </div>
+    <div class="kpi fu d6" style="--kc:var(--lime)">
+      <div class="kpi-icon">⚡</div>
+      <div class="kpi-lbl">AUC-ROC</div>
+      <div class="kpi-val" id="k-auc">—</div>
+      <div class="kpi-sub">CV: <span id="k-cv">—</span></div>
+    </div>
+  </div>
+
+  <!-- ── ROW 1: SESSIONS + SOURCE RANKING ──────────────────── -->
+  <div class="sec">Session Predictions</div>
+  <div class="row col-7-5 fu d7">
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ico">📋</span> Session Intent Scores</div>
+        <span class="tag">SAMPLE · 20 SESSIONS</span>
+      </div>
+      <div class="tbl-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Session</th><th>Traffic Source</th><th>Duration</th>
+              <th>Pages</th><th>Device</th><th>Geo</th>
+              <th>Intent Score</th><th>Prediction</th>
+            </tr>
+          </thead>
+          <tbody id="session-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ico">📡</span> Traffic Source Ranking</div>
+        <span class="tag">BY INTENT QUALITY</span>
+      </div>
+      <div id="src-rank"></div>
+    </div>
+
+  </div>
+
+  <!-- ── ROW 2: FEATURES + CONFUSION + DISTRIBUTION ──────── -->
+  <div class="sec">Model Evaluation</div>
+  <div class="row col-4-4-4 fu d8">
+
+    <!-- Feature importance -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ico">🧠</span> Feature Importance</div>
+      </div>
+      <div id="fi-chart"></div>
+      <div class="metrics-row" id="metrics-row"></div>
+    </div>
+
+    <!-- Confusion matrix + device -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ico">⚖️</span> Confusion Matrix</div>
+      </div>
+      <div class="cm-wrap">
+        <div style="display:flex;gap:6px;padding-left:20px;margin-bottom:4px">
+          <div class="cm-ax cm-ax-h">Pred HIGH</div>
+          <div class="cm-ax cm-ax-h">Pred LOW</div>
+        </div>
+        <div class="cm-row">
+          <div class="cm-ax cm-ax-v" style="height:70px;font-size:8px">ACTUAL HIGH</div>
+          <div class="cm-cell tp"><div class="cm-v" id="cm-tp">—</div><div class="cm-l">TRUE POS</div></div>
+          <div class="cm-cell fn"><div class="cm-v" id="cm-fn">—</div><div class="cm-l">FALSE NEG</div></div>
+        </div>
+        <div class="cm-row" style="margin-top:6px">
+          <div class="cm-ax cm-ax-v" style="height:70px;font-size:8px">ACTUAL LOW</div>
+          <div class="cm-cell fp"><div class="cm-v" id="cm-fp">—</div><div class="cm-l">FALSE POS</div></div>
+          <div class="cm-cell tn"><div class="cm-v" id="cm-tn">—</div><div class="cm-l">TRUE NEG</div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:22px">
+        <div class="card-title" style="font-size:12px;margin-bottom:12px"><span class="ico">📱</span> Intent Rate by Device</div>
+        <div class="dev-list" id="dev-list"></div>
+      </div>
+    </div>
+
+    <!-- Distribution + CV -->
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ico">📉</span> Score Distribution</div>
+      </div>
+      <div class="dist-legend">
+        <span style="color:var(--green)">■ High-Intent</span>
+        <span style="color:var(--rose)">■ Low-Intent</span>
+      </div>
+      <div class="dist-chart" id="dist-chart"></div>
+      <div class="dist-xlbl" id="dist-x"></div>
+      <div class="cv-wrap" id="cv-wrap">
+        <div class="card-title" style="font-size:12px;margin-bottom:4px"><span class="ico">🔬</span> Cross-Validation (5-fold)</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── ROW 3: BEHAVIORAL + SOURCE SUMMARY ───────────────── -->
+  <div class="sec">Behavioral Intelligence</div>
+  <div class="row col-5-7 fu d9">
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ico">💡</span> Top Behavioral Indicators</div>
+      </div>
+      <div class="ind-grid" id="ind-grid"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title"><span class="ico">📌</span> Traffic Source Intelligence Summary</div>
+        <span class="tag">MODEL OUTPUT</span>
+      </div>
+      <div id="src-summary"></div>
+    </div>
+
+  </div>
+
+  <!-- ── API REFERENCE ─────────────────────────────────────── -->
+  <div class="sec">API Endpoints</div>
+  <div class="card fu d9" style="margin-bottom:16px">
+    <div class="card-head">
+      <div class="card-title"><span class="ico">🔌</span> Flask REST API Reference</div>
+      <span class="tag">BASE URL: http://localhost:5000</span>
+    </div>
+    <div class="api-grid">
+      <div class="api-card">
+        <div class="api-method">GET</div>
+        <div class="api-path">/</div>
+        <div class="api-desc">Render this full analytics dashboard (Jinja2 template)</div>
+      </div>
+      <div class="api-card">
+        <div class="api-method">GET</div>
+        <div class="api-path">/api/data</div>
+        <div class="api-desc">Full dashboard_data.json payload — used by this page's fetch()</div>
+      </div>
+      <div class="api-card">
+        <div class="api-method">GET</div>
+        <div class="api-path">/api/kpis</div>
+        <div class="api-desc">KPI summary: total sessions, high/low intent, avg score, conv lift</div>
+      </div>
+      <div class="api-card">
+        <div class="api-method">GET</div>
+        <div class="api-path">/api/sessions</div>
+        <div class="api-desc">Sample session predictions with intent scores and labels</div>
+      </div>
+      <div class="api-card">
+        <div class="api-method">GET</div>
+        <div class="api-path">/api/sources</div>
+        <div class="api-desc">Traffic sources ranked by predicted intent quality</div>
+      </div>
+      <div class="api-card">
+        <div class="api-method">GET</div>
+        <div class="api-path">/api/features</div>
+        <div class="api-desc">GBM feature importance scores for all behavioral features</div>
+      </div>
+      <div class="api-card">
+        <div class="api-method">GET</div>
+        <div class="api-path">/api/metrics</div>
+        <div class="api-desc">Model evaluation: accuracy, AUC-ROC, F1, precision, recall, confusion matrix</div>
+      </div>
+      <div class="api-card">
+        <div class="api-method">GET</div>
+        <div class="api-path">/health</div>
+        <div class="api-desc">Health check — verifies data file exists and server is ready</div>
+      </div>
+      <div class="api-card" style="border-color:rgba(0,212,255,.18)">
+        <div class="api-method" style="color:var(--cyan)">DATA</div>
+        <div class="api-path">dashboard_data.json</div>
+        <div class="api-desc">Generated by running: <code style="color:var(--amber);font-size:10px">python intent_model.py</code></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+  <footer>
+    <span>Model · GBM · n_estimators=150 · max_depth=5 · lr=0.08 · subsample=0.85</span>
+    <span>Data loaded from <code style="color:var(--cyan)">GET /api/data</code> · Generated: {{ generated_at }}</span>
+    <span>Flask 3.x · Python 3.8+</span>
+  </footer>
+
+</div><!-- /wrap -->
+
+<!-- ──────────────────────────────────────────────────────────
+     JAVASCRIPT — fetches /api/data and renders all charts
+     ────────────────────────────────────────────────────────── -->
+<script>
+/* ── Helpers ──────────────────────────────────────────────── */
+function scoreColor(s) {
+  if (s >= 0.75) return 'var(--green)';
+  if (s >= 0.50) return 'var(--cyan)';
+  if (s >= 0.30) return 'var(--amber)';
+  return 'var(--rose)';
+}
+
+const SRC_GRADIENTS = [
+  'linear-gradient(90deg,var(--amber),var(--orange))',
+  'linear-gradient(90deg,var(--mist),var(--fog))',
+  'linear-gradient(90deg,var(--orange),var(--rose))',
+  'linear-gradient(90deg,var(--cyan),var(--teal))',
+  'linear-gradient(90deg,var(--blue),var(--violet))',
+  'linear-gradient(90deg,var(--fog),var(--rim2))',
+  'linear-gradient(90deg,var(--fog),var(--rim2))',
+  'linear-gradient(90deg,var(--fog),var(--rim2))',
+];
+
+const FI_COLORS = [
+  'var(--cyan)','var(--green)','var(--violet)','var(--amber)',
+  'var(--teal)','var(--blue)','var(--orange)','var(--rose)',
+  'var(--lime)','var(--mist)',
+];
+
+const RANK_CLASS = ['g','s','b','n','n','n','n','n'];
+
+const ACTIONS = [
+  'Scale budget — highest ROI source',
+  'Protect list hygiene, personalize flows',
+  'Optimize copy for high-intent keywords',
+  'Improve landing page engagement',
+  'Cultivate partnerships for more volume',
+  'Test conversion-focused content',
+  'Pause or dramatically reduce spend',
+  'Reallocate to higher-intent channels',
+];
+
+const IND_DATA = [
+  { title:'Engagement Score',     ic:'var(--green)',  sig:'HIGH', cls:'sig-hi',
+    desc:'Composite of session_duration × log(pages) — single most predictive feature at 66.4% importance. High-engagement sessions convert at 9.8× the rate of low-engagement ones.' },
+  { title:'Traffic Source',       ic:'var(--cyan)',   sig:'HIGH', cls:'sig-hi',
+    desc:'Organic Search (0.697) and Email Campaign (0.613) drive highest-quality visitors. Source alone accounts for 6.7% of model weight — choose channels carefully.' },
+  { title:'Business Hour (9–18)', ic:'var(--amber)',  sig:'MED',  cls:'sig-md',
+    desc:'Sessions during business hours show measurably higher conversion intent. Timing signal contributes 6.6% to overall model importance.' },
+  { title:'Pages per Minute',     ic:'var(--violet)', sig:'MED',  cls:'sig-md',
+    desc:'Browsing velocity distinguishes genuine research from idle scrolling. Fast multi-page browsing is a strong purchase intent signal (3.9% importance).' },
+  { title:'Session Duration',     ic:'var(--teal)',   sig:'HIGH', cls:'sig-hi',
+    desc:'Duration (raw + bucketed) contributes 6.1% combined importance. Sessions exceeding 4 minutes align strongly with high-intent classification.' },
+  { title:'Desktop Device',       ic:'var(--blue)',   sig:'MED',  cls:'sig-md',
+    desc:'Desktop sessions have a 68.2% high-intent rate versus 16.0% for Mobile. Device context is a strong predictor of purchase readiness.' },
+  { title:'Tier-1 Geography',     ic:'var(--lime)',   sig:'MED',  cls:'sig-md',
+    desc:'US, UK, CA, DE, AU, FR sessions contribute 2.2% to importance. Tier-1 markets show higher conversion intent across all source types.' },
+  { title:'Bounce / Rapid Exit',  ic:'var(--rose)',   sig:'LOW',  cls:'sig-lo',
+    desc:'Single-page sessions under 30 s are near-certain low-intent signals. The bounce flag is a strong negative predictor across every traffic source.' },
+];
+
+/* ── Main: fetch /api/data and render ─────────────────────── */
+async function renderDashboard() {
+  const statusEl = document.getElementById('api-status');
+  statusEl.textContent = 'FETCHING /api/data...';
+
+  let D;
+  try {
+    const res = await fetch('/api/data');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    D = await res.json();
+    statusEl.textContent = '✓ /api/data  200 OK';
+    statusEl.className   = 'ok';
+  } catch (err) {
+    statusEl.textContent = '✗ API ERROR';
+    statusEl.className   = 'error';
+    console.error('Failed to fetch /api/data:', err);
+    document.getElementById('loading').classList.add('hidden');
+    return;
+  }
+
+  /* Hide loader */
+  document.getElementById('loading').classList.add('hidden');
+
+  const K = D.kpis, M = D.metrics;
+
+  /* ── KPIs ─────────────────────────────────────────────── */
+  document.getElementById('k-total').textContent  = K.total_sessions.toLocaleString();
+  document.getElementById('k-hi').textContent     = K.high_intent.toLocaleString();
+  document.getElementById('k-hi-pct').textContent = K.hi_pct + '%';
+  document.getElementById('k-lo').textContent     = K.low_intent.toLocaleString();
+  document.getElementById('k-lo-pct').textContent = (100 - K.hi_pct).toFixed(1) + '% of sessions';
+  document.getElementById('k-avg').textContent    = K.avg_score.toFixed(3);
+  document.getElementById('k-lift').textContent   = K.conv_lift + '×';
+  document.getElementById('k-auc').textContent    = M.auc_roc;
+  document.getElementById('k-cv').textContent     = `${M.cv_auc_mean} ±${M.cv_auc_std}`;
+
+  /* ── Session table ────────────────────────────────────── */
+  const tbody = document.getElementById('session-tbody');
+  D.sessions.forEach(s => {
+    const c  = scoreColor(s.score);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="sid">${s.id}</span></td>
+      <td><span class="src-chip">${s.source}</span></td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${s.duration}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px;text-align:center">${s.pages}</td>
+      <td style="font-size:11px">${s.device}</td>
+      <td style="font-family:'JetBrains Mono',monospace;font-size:11px">${s.geo}</td>
+      <td>
+        <div class="bar-row">
+          <div class="bar-outer">
+            <div class="bar-inner" style="width:0%;background:${c}" data-w="${s.score * 100}%"></div>
+          </div>
+          <span class="bar-num" style="color:${c}">${s.score.toFixed(3)}</span>
+        </div>
+      </td>
+      <td><span class="${s.label === 'HIGH' ? 'badge-hi' : 'badge-lo'}">${s.label}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  /* ── Source ranking ───────────────────────────────────── */
+  const srcDiv = document.getElementById('src-rank');
+  D.sources.forEach((src, i) => {
+    const c  = scoreColor(src.avg_score);
+    const bw = Math.round(src.avg_score * 100);
+    srcDiv.innerHTML += `
+      <div class="src-row">
+        <div class="src-num ${RANK_CLASS[i]}">${String(src.rank).padStart(2,'0')}</div>
+        <div class="src-body">
+          <div class="src-name">${src.name}</div>
+          <div class="src-meta">${src.sessions.toLocaleString()} sessions · ${src.conv_rate}% conv · ${src.avg_pages} pg avg</div>
+          <div class="src-bar">
+            <div class="src-fill" style="width:0%;background:${SRC_GRADIENTS[i]}" data-w="${bw}%"></div>
+          </div>
+        </div>
+        <div class="src-score" style="color:${c}">${src.avg_score.toFixed(3)}</div>
+      </div>
+    `;
+  });
+
+  /* ── Feature importance ───────────────────────────────── */
+  const fiDiv = document.getElementById('fi-chart');
+  const maxFi = D.features[0].pct;
+  D.features.forEach((f, i) => {
+    const w = Math.min((f.pct / maxFi) * 100, 100);
+    fiDiv.innerHTML += `
+      <div class="fi-row">
+        <span class="fi-name">${f.name}</span>
+        <div class="fi-trk">
+          <div class="fi-fill" style="width:0%;background:${FI_COLORS[i]}" data-w="${w}%"></div>
+        </div>
+        <span class="fi-pct" style="color:${FI_COLORS[i]}">${f.pct}%</span>
+      </div>
+    `;
+  });
+
+  /* ── Metrics row ──────────────────────────────────────── */
+  const mrDiv = document.getElementById('metrics-row');
+  [['Accuracy', M.accuracy + '%'], ['F1', M.f1 + '%'], ['Precision', M.precision + '%'], ['Recall', M.recall + '%']].forEach(([l, v]) => {
+    mrDiv.innerHTML += `<div class="metric-box"><div class="mv">${v}</div><div class="ml">${l}</div></div>`;
+  });
+
+  /* ── Confusion matrix ─────────────────────────────────── */
+  document.getElementById('cm-tp').textContent = M.tp;
+  document.getElementById('cm-fn').textContent = M.fn;
+  document.getElementById('cm-fp').textContent = M.fp;
+  document.getElementById('cm-tn').textContent = M.tn;
+
+  /* ── Device breakdown ─────────────────────────────────── */
+  const devIcons = { Desktop: '🖥️', Mobile: '📱', Tablet: '⬜' };
+  const devDiv   = document.getElementById('dev-list');
+  Object.entries(D.devices).forEach(([name, d]) => {
+    devDiv.innerHTML += `
+      <div class="dev-row">
+        <span class="dev-ico">${devIcons[name] || '💻'}</span>
+        <div class="dev-info">
+          <div class="dev-name">${name} <span style="color:var(--fog);font-family:'JetBrains Mono',monospace;font-size:9px">${d.count.toLocaleString()} sessions</span></div>
+          <div class="dev-bar">
+            <div class="dev-fill" data-w="${d.hi_pct}%" style="width:0%"></div>
+          </div>
+        </div>
+        <span class="dev-pct">${d.hi_pct}%</span>
+      </div>
+    `;
+  });
+
+  /* ── Score distribution ───────────────────────────────── */
+  const maxVal  = Math.max(...D.dist.map(d => d.high + d.low));
+  const distDiv = document.getElementById('dist-chart');
+  const distX   = document.getElementById('dist-x');
+  D.dist.forEach((d, i) => {
+    const hiH = Math.round((d.high / maxVal) * 90);
+    const loH = Math.round((d.low  / maxVal) * 90);
+    distDiv.innerHTML += `
+      <div class="dist-group">
+        ${d.high > 0 ? `<div class="dist-hi" style="height:${hiH}px"></div>` : ''}
+        ${d.low  > 0 ? `<div class="dist-lo" style="height:${loH}px"></div>` : ''}
+      </div>
+    `;
+    distX.innerHTML += `<span>${i % 5 === 0 ? d.bin.toFixed(2) : ''}</span>`;
+  });
+
+  /* ── CV bars ──────────────────────────────────────────── */
+  const cvDiv = document.getElementById('cv-wrap');
+  [
+    { lbl: 'CV AUC-ROC', val: M.cv_auc_mean, sd: `±${M.cv_auc_std}`, color: 'var(--cyan)' },
+    { lbl: 'Test Accuracy', val: M.accuracy / 100, color: 'var(--green)' },
+    { lbl: 'Test F1 Score', val: M.f1 / 100, color: 'var(--violet)' },
+  ].forEach(c => {
+    cvDiv.innerHTML += `
+      <div class="cv-row">
+        <span class="cv-lbl">${c.lbl}</span>
+        <div class="cv-trk">
+          <div class="cv-fill" style="width:0%;background:${c.color}" data-w="${(c.val * 100).toFixed(0)}%"></div>
+        </div>
+        <span class="cv-num" style="color:${c.color}">${c.val.toFixed(3)}${c.sd ? ' ' + c.sd : ''}</span>
+      </div>
+    `;
+  });
+
+  /* ── Behavioral indicators ────────────────────────────── */
+  const indDiv = document.getElementById('ind-grid');
+  IND_DATA.forEach(ind => {
+    indDiv.innerHTML += `
+      <div class="ind-card" style="--ic:${ind.ic}">
+        <div class="ind-title">${ind.title}</div>
+        <div class="ind-desc">${ind.desc}</div>
+        <span class="ind-sig ${ind.cls}">${ind.sig} SIGNAL</span>
+      </div>
+    `;
+  });
+
+  /* ── Source summary ───────────────────────────────────── */
+  const summDiv = document.getElementById('src-summary');
+  D.sources.forEach((src, i) => {
+    const c = scoreColor(src.avg_score);
+    summDiv.innerHTML += `
+      <div class="summ-row">
+        <div class="summ-num" style="color:${c}">${String(src.rank).padStart(2, '0')}</div>
+        <div class="summ-body">
+          <div class="summ-title">${src.name}</div>
+          <div class="summ-detail">
+            ${src.sessions.toLocaleString()} sessions ·
+            ${src.hi_pct}% high-intent ·
+            ${src.conv_rate}% conv rate ·
+            avg ${Math.round(src.avg_dur / 60)}m session ·
+            ${src.avg_pages} pages/session
+            <br><strong style="color:${c}">→ ${ACTIONS[i]}</strong>
+          </div>
+        </div>
+        <div class="summ-score" style="border-color:${c};color:${c}">${src.avg_score.toFixed(3)}</div>
+      </div>
+    `;
+  });
+
+  /* ── Animate all bars after a short delay ─────────────── */
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.querySelectorAll('[data-w]').forEach(el => {
+        el.style.transition = 'width 1.4s cubic-bezier(.16,1,.3,1)';
+        el.style.width = el.dataset.w;
+      });
+    }, 250);
+  });
+}
+
+/* Run on DOM ready */
+document.addEventListener('DOMContentLoaded', renderDashboard);
+</script>
+</body>
+</html>
