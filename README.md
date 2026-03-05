@@ -1,4 +1,4 @@
-# Visitor Intent Modeling — Flask App
+# Visitor Intent Modeling 
 
 ## Project Structure
 ```
