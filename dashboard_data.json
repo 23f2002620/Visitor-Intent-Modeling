@@ -1,0 +1,485 @@
+{
+  "kpis": {
+    "total_sessions": 5000,
+    "high_intent": 2323,
+    "low_intent": 2677,
+    "hi_pct": 46.5,
+    "avg_score": 0.476,
+    "conv_lift": 9.8
+  },
+  "metrics": {
+    "accuracy": 84.5,
+    "auc_roc": 0.936,
+    "f1": 83.7,
+    "precision": 83.0,
+    "recall": 84.5,
+    "cv_auc_mean": 0.945,
+    "cv_auc_std": 0.009,
+    "tp": 399,
+    "fp": 82,
+    "fn": 73,
+    "tn": 446
+  },
+  "sessions": [
+    {
+      "id": "S-103613",
+      "source": "Social Organic",
+      "duration": "1m 16s",
+      "pages": 3,
+      "device": "Desktop",
+      "geo": "US",
+      "score": 0.028,
+      "label": "LOW",
+      "converted": 0
+    },
+    {
+      "id": "S-100100",
+      "source": "Organic Search",
+      "duration": "21m 5s",
+      "pages": 4,
+      "device": "Desktop",
+      "geo": "Other",
+      "score": 0.989,
+      "label": "HIGH",
+      "converted": 1
+    },
+    {
+      "id": "S-103732",
+      "source": "Paid Search",
+      "duration": "4m 52s",
+      "pages": 7,
+      "device": "Desktop",
+      "geo": "Other",
+      "score": 0.927,
+      "label": "HIGH",
+      "converted": 1
+    },
+    {
+      "id": "S-101247",
+      "source": "Organic Search",
+      "duration": "0m 13s",
+      "pages": 2,
+      "device": "Mobile",
+      "geo": "UK",
+      "score": 0.167,
+      "label": "LOW",
+      "converted": 0
+    },
+    {
+      "id": "S-101339",
+      "source": "Organic Search",
+      "duration": "6m 46s",
+      "pages": 8,
+      "device": "Desktop",
+      "geo": "CA",
+      "score": 0.991,
+      "label": "HIGH",
+      "converted": 1
+    },
+    {
+      "id": "S-101063",
+      "source": "Paid Search",
+      "duration": "3m 27s",
+      "pages": 3,
+      "device": "Mobile",
+      "geo": "MX",
+      "score": 0.254,
+      "label": "LOW",
+      "converted": 0
+    },
+    {
+      "id": "S-100010",
+      "source": "Organic Search",
+      "duration": "0m 16s",
+      "pages": 10,
+      "device": "Desktop",
+      "geo": "Other",
+      "score": 0.958,
+      "label": "HIGH",
+      "converted": 1
+    },
+    {
+      "id": "S-103688",
+      "source": "Organic Search",
+      "duration": "3m 5s",
+      "pages": 3,
+      "device": "Desktop",
+      "geo": "US",
+      "score": 0.789,
+      "label": "HIGH",
+      "converted": 1
+    },
+    {
+      "id": "S-104700",
+      "source": "Organic Search",
+      "duration": "2m 8s",
+      "pages": 1,
+      "device": "Mobile",
+      "geo": "Other",
+      "score": 0.163,
+      "label": "LOW",
+      "converted": 0
+    },
+    {
+      "id": "S-103364",
+      "source": "Social Paid",
+      "duration": "0m 35s",
+      "pages": 5,
+      "device": "Desktop",
+      "geo": "UK",
+      "score": 0.079,
+      "label": "LOW",
+      "converted": 0
+    },
+    {
+      "id": "S-101378",
+      "source": "Email Campaign",
+      "duration": "2m 38s",
+      "pages": 6,
+      "device": "Tablet",
+      "geo": "US",
+      "score": 0.85,
+      "label": "HIGH",
+      "converted": 1
+    },
+    {
+      "id": "S-101273",
+      "source": "Organic Search",
+      "duration": "7m 59s",
+      "pages": 3,
+      "device": "Mobile",
+      "geo": "US",
+      "score": 0.982,
+      "label": "HIGH",
+      "converted": 1
+    },
+    {
+      "id": "S-102888",
+      "source": "Social Organic",
+      "duration": "0m 5s",
+      "pages": 3,
+      "device": "Desktop",
+      "geo": "Other",
+      "score": 0.08,
+      "label": "LOW",
+      "converted": 0
+    },
+    {
+      "id": "S-103416",
+      "source": "Email Campaign",
+      "duration": "0m 5s",
+      "pages": 3,
+      "device": "Mobile",
+      "geo": "US",
+      "score": 0.283,
+      "label": "LOW",
+      "converted": 0
+    },
+    {
+      "id": "S-103113",
+      "source": "Organic Search",
+      "duration": "1m 17s",
+      "pages": 1,
+      "device": "Mobile",
+      "geo": "CA",
+      "score": 0.062,
+      "label": "LOW",
+      "converted": 0
+    },
+    {
+      "id": "S-100234",
+      "source": "Organic Search",
+      "duration": "5m 28s",
+      "pages": 5,
+      "device": "Desktop",
+      "geo": "BR",
+      "score": 0.96,
+      "label": "HIGH",
+      "converted": 1
+    },
+    {
+      "id": "S-101746",
+      "source": "Organic Search",
+      "duration": "9m 27s",
+      "pages": 1,
+      "device": "Mobile",
+      "geo": "US",
+      "score": 0.563,
+      "label": "HIGH",
+      "converted": 1
+    },
+    {
+      "id": "S-101635",
+      "source": "Organic Search",
+      "duration": "30m 0s",
+      "pages": 4,
+      "device": "Desktop",
+      "geo": "UK",
+      "score": 0.99,
+      "label": "HIGH",
+      "converted": 1
+    },
+    {
+      "id": "S-102683",
+      "source": "Paid Search",
+      "duration": "4m 32s",
+      "pages": 4,
+      "device": "Desktop",
+      "geo": "US",
+      "score": 0.953,
+      "label": "HIGH",
+      "converted": 1
+    },
+    {
+      "id": "S-104825",
+      "source": "Organic Search",
+      "duration": "3m 15s",
+      "pages": 6,
+      "device": "Mobile",
+      "geo": "US",
+      "score": 0.857,
+      "label": "HIGH",
+      "converted": 1
+    }
+  ],
+  "sources": [
+    {
+      "rank": 1,
+      "name": "Organic Search",
+      "sessions": 1283,
+      "avg_score": 0.697,
+      "hi_pct": 69.5,
+      "avg_pages": 4.7,
+      "avg_dur": 327.0,
+      "conv_rate": 70.8
+    },
+    {
+      "rank": 2,
+      "name": "Email Campaign",
+      "sessions": 588,
+      "avg_score": 0.613,
+      "hi_pct": 60.5,
+      "avg_pages": 4.1,
+      "avg_dur": 285.0,
+      "conv_rate": 61.1
+    },
+    {
+      "rank": 3,
+      "name": "Paid Search",
+      "sessions": 967,
+      "avg_score": 0.569,
+      "hi_pct": 56.0,
+      "avg_pages": 3.9,
+      "avg_dur": 265.0,
+      "conv_rate": 56.4
+    },
+    {
+      "rank": 4,
+      "name": "Direct",
+      "sessions": 692,
+      "avg_score": 0.421,
+      "hi_pct": 41.6,
+      "avg_pages": 3.4,
+      "avg_dur": 192.0,
+      "conv_rate": 41.9
+    },
+    {
+      "rank": 5,
+      "name": "Referral",
+      "sessions": 421,
+      "avg_score": 0.394,
+      "hi_pct": 38.5,
+      "avg_pages": 3.4,
+      "avg_dur": 226.0,
+      "conv_rate": 37.3
+    },
+    {
+      "rank": 6,
+      "name": "Social Organic",
+      "sessions": 471,
+      "avg_score": 0.139,
+      "hi_pct": 10.4,
+      "avg_pages": 2.3,
+      "avg_dur": 118.0,
+      "conv_rate": 11.9
+    },
+    {
+      "rank": 7,
+      "name": "Display Ads",
+      "sessions": 256,
+      "avg_score": 0.094,
+      "hi_pct": 5.5,
+      "avg_pages": 1.8,
+      "avg_dur": 80.0,
+      "conv_rate": 6.2
+    },
+    {
+      "rank": 8,
+      "name": "Social Paid",
+      "sessions": 322,
+      "avg_score": 0.092,
+      "hi_pct": 6.2,
+      "avg_pages": 2.1,
+      "avg_dur": 88.0,
+      "conv_rate": 8.4
+    }
+  ],
+  "features": [
+    {
+      "name": "Engagement Score",
+      "pct": 66.4
+    },
+    {
+      "name": "Traffic Source",
+      "pct": 6.67
+    },
+    {
+      "name": "Business Hour",
+      "pct": 6.56
+    },
+    {
+      "name": "Pages per Minute",
+      "pct": 3.91
+    },
+    {
+      "name": "Duration (min)",
+      "pct": 3.47
+    },
+    {
+      "name": "Session Duration",
+      "pct": 2.64
+    },
+    {
+      "name": "Pages Visited",
+      "pct": 2.52
+    },
+    {
+      "name": "Tier-1 Geo",
+      "pct": 2.17
+    },
+    {
+      "name": "Device Type",
+      "pct": 1.48
+    },
+    {
+      "name": "Hour of Day",
+      "pct": 1.48
+    }
+  ],
+  "dist": [
+    {
+      "bin": 0.0,
+      "high": 0,
+      "low": 1273
+    },
+    {
+      "bin": 0.05,
+      "high": 0,
+      "low": 425
+    },
+    {
+      "bin": 0.1,
+      "high": 0,
+      "low": 250
+    },
+    {
+      "bin": 0.15,
+      "high": 0,
+      "low": 160
+    },
+    {
+      "bin": 0.2,
+      "high": 0,
+      "low": 121
+    },
+    {
+      "bin": 0.25,
+      "high": 0,
+      "low": 115
+    },
+    {
+      "bin": 0.3,
+      "high": 0,
+      "low": 85
+    },
+    {
+      "bin": 0.35,
+      "high": 0,
+      "low": 86
+    },
+    {
+      "bin": 0.4,
+      "high": 0,
+      "low": 72
+    },
+    {
+      "bin": 0.45,
+      "high": 0,
+      "low": 90
+    },
+    {
+      "bin": 0.5,
+      "high": 83,
+      "low": 0
+    },
+    {
+      "bin": 0.55,
+      "high": 81,
+      "low": 0
+    },
+    {
+      "bin": 0.6,
+      "high": 59,
+      "low": 0
+    },
+    {
+      "bin": 0.65,
+      "high": 73,
+      "low": 0
+    },
+    {
+      "bin": 0.7,
+      "high": 97,
+      "low": 0
+    },
+    {
+      "bin": 0.75,
+      "high": 97,
+      "low": 0
+    },
+    {
+      "bin": 0.8,
+      "high": 139,
+      "low": 0
+    },
+    {
+      "bin": 0.85,
+      "high": 124,
+      "low": 0
+    },
+    {
+      "bin": 0.9,
+      "high": 269,
+      "low": 0
+    },
+    {
+      "bin": 0.95,
+      "high": 1301,
+      "low": 0
+    }
+  ],
+  "devices": {
+    "Desktop": {
+      "hi_pct": 68.2,
+      "count": 2701
+    },
+    "Mobile": {
+      "hi_pct": 16.0,
+      "count": 1817
+    },
+    "Tablet": {
+      "hi_pct": 39.8,
+      "count": 482
+    }
+  }
+}
